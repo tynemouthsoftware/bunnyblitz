@@ -1,5 +1,7 @@
 # bunnyblitz
-VIC 20 Bunny Blitz game
+VIC20 Bunny Blitz game
+
+![Bunny Blitz game screenshot](Screenshots/Bunny%20Blitz%20Game.png)
 
 My rewrite in assembler of Rabbit Blitz originally by C.Simun in BASIC. 
 
