@@ -158,9 +158,13 @@ NEW_LEVEL:
     sty BUILDINGS_STANDING              ; no buildings so far
 
 buildloop:
-    ldx #6                              ; get random number from 0-5
-    jsr RND                             ;
 
+    ; get random number from 0-5
+-   jsr RAND16                          ; get random number
+    and #7                              ; mask to 0-7
+    cmp #6                              ; repeat if 6 or 7
+    bcs -
+    
     cmp #4                              ; check value, >= 4?
     bcs nextcol                         ; skip building
 
@@ -460,9 +464,12 @@ bombloop:
 +   bcc bombloop                        ; no, keep moving down
 
     ; bomb landed
-    ldx #3                              ; get a random number from 0 to 2
-    jsr RND
-
+    ; get a random number from 0-2
+-   jsr RAND16                          ; get a random number
+    and #3                              ; mask to 0-3
+    cmp #2                              ; repeat if 3
+    bcs -
+    
     clc                                 ; move plane by that amount
     adc PLANE_LSB
     sta PLANE_LSB
@@ -773,21 +780,6 @@ DELAY:
     dex                                 ;
     bne -                               ;
     rts                                 ;
-
-;======================================================================================
-; Return a random number from 0 to X-1 in A
-; Where 0 < X < 8
-; Start at 0 and add 1 for each 1 in X bits of the 8 bit random number
-;======================================================================================
-RND:
-    jsr RAND16                          ; get a random number in A
-    sta TEMP                            ; store in temporary location
-    tya                                 ; A=0
--   lsr TEMP                            ; 0 -> TEMP -> carry
-    adc #0                              ; A=A+0+carry
-    dex                                 ;
-    bne -                               ; loop back
-    rts                                 ; return with value in A
 
 ;======================================================================================
 ; Pseudo-random-number generator. You can get 8-bit random numbers in A

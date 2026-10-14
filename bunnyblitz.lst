@@ -251,7 +251,7 @@
     42  1028 d0f1                   bne -
     43                          
     44  102a a200                   ldx #0                              ; copy user defined characters
-    45  102c bd5214             -   lda CharacterData,x
+    45  102c bd4c14             -   lda CharacterData,x
     46  102f 9d081d                 sta UDG_DATA,x                      ; into character RAM
     47  1032 e8                     inx
     48  1033 e030                   cpx #6 * 8                          ; 6 characters, 8 bytes per character
@@ -289,7 +289,7 @@
     80  105d a510                   lda SKIP_TITLE                      ; skip the title if not the first time
     81  105f d005                   bne NEW_LEVEL
     82                          
-    83  1061 204713                 jsr SUB_TITLE                       ; show the title screen
+    83  1061 204f13                 jsr SUB_TITLE                       ; show the title screen
     84  1064 e610                   inc SKIP_TITLE                      ; skip it next time
     85                          
     86                          ;===================================================================================================
@@ -303,7 +303,7 @@
     94  106e 8430                   sty PLANE_LSB
     95  1070 8432                   sty PLANE_COLOUR_LSB
     96                          
-    97  1072 20ff13                 jsr SUB_CLS                         ; clear the screen
+    97  1072 200714                 jsr SUB_CLS                         ; clear the screen
     98                          
     99  1075 a919                   lda #25                             ; white border and background
    100  1077 8d0f90                 sta VIC_BORDER
@@ -367,748 +367,740 @@
    158  10e2 8426                   sty BUILDINGS_STANDING              ; no buildings so far
    159                          
    160                          buildloop:
-   161  10e4 a206                   ldx #6                              ; get random number from 0-5
-   162  10e6 203014                 jsr RND                             ;
-   163                          
-   164  10e9 c904                   cmp #4                              ; check value, >= 4?
-   165  10eb b029                   bcs nextcol                         ; skip building
-   166                          
-   167  10ed e626                   inc BUILDINGS_STANDING              ; we have a new building
-   168                          
-   169  10ef aa                     tax                                 ; X = number of storeys
+   161                          
+   162                              ; get random number from 0-5
+   163  10e4 203814             -   jsr RAND16                          ; get random number
+   164  10e7 2907                   and #7                              ; mask to 0-7
+   165  10e9 c906                   cmp #6                              ; repeat if 6 or 7
+   166  10eb b0f7                   bcs -
+   167                              
+   168  10ed c904                   cmp #4                              ; check value, >= 4?
+   169  10ef b029                   bcs nextcol                         ; skip building
    170                          
-   171  10f0 a513                   lda COL                             ; offset starts as column
+   171  10f1 e626                   inc BUILDINGS_STANDING              ; we have a new building
    172                          
-   173  10f2 e8                     inx                                 ; 0-3 -> 1-4
-   174  10f3 18                     clc
-   175                          offsetloop:
-   176  10f4 692c                   adc #2 * SCREEN_WIDTH               ; add 2 lines at a time
-   177  10f6 ca                     dex
-   178  10f7 d0fb                   bne offsetloop
-   179                          
-   180  10f9 aa                     tax                                 ; X = offset
-   181  10fa a926                   lda #UDG_ROOF                       ; draw the roof
-   182  10fc 9dc61e                 sta SKYLINE,x                       ;
-   183  10ff 98                     tya                                 ; set the roof colour to black (0)
-   184  1100 9dc696                 sta SKYLINE_COL,x                   ;
-   185                          
-   186  1103 18                     clc
-   187                          drawloop:
-   188  1104 8a                     txa                                 ; X = X + 22
-   189  1105 6916                   adc #SCREEN_WIDTH                   ;
-   190  1107 aa                     tax                                 ;
-   191                          
-   192  1108 a921                   lda #UDG_BUIDLING                   ; draw the building
-   193  110a 9dc61e                 sta SKYLINE,x                       ;
-   194  110d a900                   lda #COLOUR_BLACK                   ; set the building colour
-   195  110f 9dc696                 sta SKYLINE_COL,x                   ;
-   196  1112 e0dc                   cpx #BUILDING_MAX_HEIGHT            ; reached the limit?
-   197  1114 90ee                   bcc drawloop
-   198                          
-   199                          nextcol:
-   200  1116 e613                   inc COL                             ; move to the next column
-   201  1118 a513                   lda COL                             ; check < 22 columns
-   202  111a c916                   cmp #SCREEN_WIDTH
-   203  111c d0c6                   bne buildloop
-   204                          
-   205                              ; drop through
-   206                          
-   207                          ;======================================================================================
-   208                          ; The main game loop
-   209                          ;======================================================================================
-   210                          MAIN_LOOP:
-   211                              ; draw the plane
-   212  111e a922                   lda #UDG_PLANE
-   213  1120 9130                   sta (PLANE),y
-   214  1122 a906                   lda #COLOUR_BLUE
-   215  1124 9132                   sta (PLANE_COLOUR),y
-   216                          
-   217                              ; plane flight delay
-   218  1126 a511                   lda PLANE_DELAY
-   219  1128 202614                 jsr DELAY
+   173  10f3 aa                     tax                                 ; X = number of storeys
+   174                          
+   175  10f4 a513                   lda COL                             ; offset starts as column
+   176                          
+   177  10f6 e8                     inx                                 ; 0-3 -> 1-4
+   178  10f7 18                     clc
+   179                          offsetloop:
+   180  10f8 692c                   adc #2 * SCREEN_WIDTH               ; add 2 lines at a time
+   181  10fa ca                     dex
+   182  10fb d0fb                   bne offsetloop
+   183                          
+   184  10fd aa                     tax                                 ; X = offset
+   185  10fe a926                   lda #UDG_ROOF                       ; draw the roof
+   186  1100 9dc61e                 sta SKYLINE,x                       ;
+   187  1103 98                     tya                                 ; set the roof colour to black (0)
+   188  1104 9dc696                 sta SKYLINE_COL,x                   ;
+   189                          
+   190  1107 18                     clc
+   191                          drawloop:
+   192  1108 8a                     txa                                 ; X = X + 22
+   193  1109 6916                   adc #SCREEN_WIDTH                   ;
+   194  110b aa                     tax                                 ;
+   195                          
+   196  110c a921                   lda #UDG_BUIDLING                   ; draw the building
+   197  110e 9dc61e                 sta SKYLINE,x                       ;
+   198  1111 a900                   lda #COLOUR_BLACK                   ; set the building colour
+   199  1113 9dc696                 sta SKYLINE_COL,x                   ;
+   200  1116 e0dc                   cpx #BUILDING_MAX_HEIGHT            ; reached the limit?
+   201  1118 90ee                   bcc drawloop
+   202                          
+   203                          nextcol:
+   204  111a e613                   inc COL                             ; move to the next column
+   205  111c a513                   lda COL                             ; check < 22 columns
+   206  111e c916                   cmp #SCREEN_WIDTH
+   207  1120 d0c2                   bne buildloop
+   208                          
+   209                              ; drop through
+   210                          
+   211                          ;======================================================================================
+   212                          ; The main game loop
+   213                          ;======================================================================================
+   214                          MAIN_LOOP:
+   215                              ; draw the plane
+   216  1122 a922                   lda #UDG_PLANE
+   217  1124 9130                   sta (PLANE),y
+   218  1126 a906                   lda #COLOUR_BLUE
+   219  1128 9132                   sta (PLANE_COLOUR),y
    220                          
-   221                              ; print stats
-   222  112b a521                   lda BOMBS_UNITS
-   223  112d 8ddb1f                 sta SCREEN_B_UNITS
-   224  1130 a522                   lda BOMBS_TENS
-   225  1132 8dda1f                 sta SCREEN_B_TENS
-   226                          
-   227  1135 a525                   lda BUILDINGS_HUNDREDS
-   228  1137 8dd21f                 sta SCREEN_TB_HUNDREDS
-   229  113a a524                   lda BUILDINGS_TENS
-   230  113c 8dd31f                 sta SCREEN_TB_TENS
-   231  113f a523                   lda BUILDINGS_UNITS
-   232  1141 8dd41f                 sta SCREEN_TB_UNITS
-   233                          
-   234  1144 a520                   lda SCORE
-   235  1146 8de11f                 sta SCREEN_SC_UNITS
-   236                          
-   237  1149 a5c5               -   lda LAST_KEY                        ; check last key pressed
-   238  114b c920                   cmp #KEY_SPACE                      ; was it SPACE ?
-   239  114d d003                   bne +
-   240  114f 201412                 JSR DROP_BOMB                       ; yes, drop a bomb
-   241                          
-   242  1152 c8                 +   iny                                 ; no, check if we hit anything
-   243  1153 b130                   lda (PLANE),y                       ; Y=1, check next character
-   244  1155 88                     dey                                 ; Y back to zero, phew
-   245  1156 c926                   cmp #UDG_ROOF                       ; was it a bit of building?
-   246  1158 f073                   beq CRASHED                         ; yes
-   247  115a c921                   cmp #UDG_BUIDLING
-   248  115c f06f                   beq CRASHED                         ; also yes
-   249                          
-   250  115e a016                   ldy #SCREEN_WIDTH                   ; no, so check below for ground
-   251  1160 b130                   lda (PLANE),y
-   252  1162 a000                   ldy #0
-   253  1164 c924                   cmp #UDG_GRASS                      ; have we landed?
-   254  1166 f02a                   beq TAXI_HOME                       ; yes
-   255                          
-   256                              ; not landed yet
-   257                          
-   258                              ; the ↑ key is pause - who knew?
-   259  1168 a5c5                   lda LAST_KEY
-   260  116a c936                   cmp #KEY_UP_ARROW
-   261  116c d003                   bne +
-   262  116e 202913                 jsr SUB_PAUSE
-   263                          
-   264  1171 a925               +   lda #UDG_SKY                        ; hide the old plane position
-   265  1173 9130                   sta (PLANE),y
-   266                          
-   267  1175 a901                   lda #1                              ; move 1 square to the right
-   268  1177 a626                   ldx BUILDINGS_STANDING              ; check if all the buildings are gone?
-   269  1179 d002                   bne +
-   270  117b a917                   lda #SCREEN_WIDTH + 1               ; yes, start to descend, 1 right, 1 down
-   271                          
-   272  117d 18                 +   clc                                 ; add 1 or 23 to the plane position
-   273  117e 6530                   adc PLANE_LSB
-   274  1180 8530                   sta PLANE_LSB                       ; update postition and colour
-   275  1182 8532                   sta PLANE_COLOUR_LSB
-   276  1184 9004                   bcc +
-   277  1186 e631                   inc PLANE_MSB
-   278  1188 e633                   inc PLANE_COLOUR_MSB
-   279                          
-   280  118a a9f5               +   lda #$F5                            ; make the noise
-   281  118c 8d0d90                 sta VIC_NOISE_FREQ
-   282                          
-   283  118f 4c1e11                 jmp MAIN_LOOP                       ; and repeat until we hit something or land
-   284                          
-   285                          
-   286                          ;======================================================================================
-   287                          ; Taxi the plane to the right hand edge
-   288                          ;======================================================================================
-   289                          TAXI_HOME:
-   290  1192 8c0d90                 sty VIC_NOISE_FREQ                  ; kill the noise
-   291  1195 8c0a90                 sty VIC_OSC1_FREQ                   ; sound off
-   292                          
-   293                          -
-   294  1198 a922                   lda #UDG_PLANE                      ; draw the plane
-   295  119a 9130                   sta (PLANE),y
-   296  119c a906                   lda #COLOUR_BLUE
-   297  119e 9132                   sta (PLANE_COLOUR),y
-   298                          
-   299  11a0 a932                   lda #50                             ; taxing slowly
-   300  11a2 202614                 jsr DELAY
-   301                          
-   302  11a5 a925                   lda #UDG_SKY                        ; hide the old plane position
-   303  11a7 9130                   sta (PLANE),y
-   304                          
-   305  11a9 e630                   inc PLANE_LSB                       ; move along one square
-   306  11ab e632                   inc PLANE_COLOUR_LSB
-   307  11ad d004                   bne +
-   308  11af e631                   inc PLANE_MSB
-   309  11b1 e633                   inc PLANE_COLOUR_MSB
-   310                          
-   311  11b3 a531               +   lda PLANE_MSB                       ; has the plane reached the far right edge?
-   312  11b5 c91f                   cmp #>GROUND_POS                    ;
-   313  11b7 d004                   bne +                               ; different, so no need to check LSB
-   314  11b9 a530                   lda PLANE_LSB                       ; compare LSB instead
-   315  11bb c9b8                   cmp #<GROUND_POS                    ;
-   316  11bd 90d9               +   bcc -                               ; no keep looping
-   317                          
-   318                              ; Plane has landed safely
-   319  11bf e620                   inc SCORE                           ; increase score
-   320                          
-   321  11c1 a520                   lda SCORE                           ; has the user scored 10 landings?
-   322  11c3 c93a                   cmp #CHAR_10
-   323  11c5 d003                   bne +
-   324  11c7 4ce712                 jmp LANDED_10                       ; yes, celebrate
-   325                          +
-   326  11ca 4c6610                 jmp NEW_LEVEL                       ; start the next level
-   327                          
-   328                          
-   329                          ;======================================================================================
-   330                          ; oh, now we hit someone, Mrs Webb
-   331                          ;======================================================================================
-   332                          CRASHED:
-   333  11cd a996                   lda #$96
-   334  11cf 8d0d90                 sta VIC_NOISE_FREQ
-   335                          
-   336                              ; shake the screen 10 times
-   337  11d2 a90a                   lda #10
-   338  11d4 8502                   sta TEMP
+   221                              ; plane flight delay
+   222  112a a511                   lda PLANE_DELAY
+   223  112c 202e14                 jsr DELAY
+   224                          
+   225                              ; print stats
+   226  112f a521                   lda BOMBS_UNITS
+   227  1131 8ddb1f                 sta SCREEN_B_UNITS
+   228  1134 a522                   lda BOMBS_TENS
+   229  1136 8dda1f                 sta SCREEN_B_TENS
+   230                          
+   231  1139 a525                   lda BUILDINGS_HUNDREDS
+   232  113b 8dd21f                 sta SCREEN_TB_HUNDREDS
+   233  113e a524                   lda BUILDINGS_TENS
+   234  1140 8dd31f                 sta SCREEN_TB_TENS
+   235  1143 a523                   lda BUILDINGS_UNITS
+   236  1145 8dd41f                 sta SCREEN_TB_UNITS
+   237                          
+   238  1148 a520                   lda SCORE
+   239  114a 8de11f                 sta SCREEN_SC_UNITS
+   240                          
+   241  114d a5c5               -   lda LAST_KEY                        ; check last key pressed
+   242  114f c920                   cmp #KEY_SPACE                      ; was it SPACE ?
+   243  1151 d003                   bne +
+   244  1153 201812                 JSR DROP_BOMB                       ; yes, drop a bomb
+   245                          
+   246  1156 c8                 +   iny                                 ; no, check if we hit anything
+   247  1157 b130                   lda (PLANE),y                       ; Y=1, check next character
+   248  1159 88                     dey                                 ; Y back to zero, phew
+   249  115a c926                   cmp #UDG_ROOF                       ; was it a bit of building?
+   250  115c f073                   beq CRASHED                         ; yes
+   251  115e c921                   cmp #UDG_BUIDLING
+   252  1160 f06f                   beq CRASHED                         ; also yes
+   253                          
+   254  1162 a016                   ldy #SCREEN_WIDTH                   ; no, so check below for ground
+   255  1164 b130                   lda (PLANE),y
+   256  1166 a000                   ldy #0
+   257  1168 c924                   cmp #UDG_GRASS                      ; have we landed?
+   258  116a f02a                   beq TAXI_HOME                       ; yes
+   259                          
+   260                              ; not landed yet
+   261                          
+   262                              ; the ↑ key is pause - who knew?
+   263  116c a5c5                   lda LAST_KEY
+   264  116e c936                   cmp #KEY_UP_ARROW
+   265  1170 d003                   bne +
+   266  1172 203113                 jsr SUB_PAUSE
+   267                          
+   268  1175 a925               +   lda #UDG_SKY                        ; hide the old plane position
+   269  1177 9130                   sta (PLANE),y
+   270                          
+   271  1179 a901                   lda #1                              ; move 1 square to the right
+   272  117b a626                   ldx BUILDINGS_STANDING              ; check if all the buildings are gone?
+   273  117d d002                   bne +
+   274  117f a917                   lda #SCREEN_WIDTH + 1               ; yes, start to descend, 1 right, 1 down
+   275                          
+   276  1181 18                 +   clc                                 ; add 1 or 23 to the plane position
+   277  1182 6530                   adc PLANE_LSB
+   278  1184 8530                   sta PLANE_LSB                       ; update postition and colour
+   279  1186 8532                   sta PLANE_COLOUR_LSB
+   280  1188 9004                   bcc +
+   281  118a e631                   inc PLANE_MSB
+   282  118c e633                   inc PLANE_COLOUR_MSB
+   283                          
+   284  118e a9f5               +   lda #$F5                            ; make the noise
+   285  1190 8d0d90                 sta VIC_NOISE_FREQ
+   286                          
+   287  1193 4c2211                 jmp MAIN_LOOP                       ; and repeat until we hit something or land
+   288                          
+   289                          
+   290                          ;======================================================================================
+   291                          ; Taxi the plane to the right hand edge
+   292                          ;======================================================================================
+   293                          TAXI_HOME:
+   294  1196 8c0d90                 sty VIC_NOISE_FREQ                  ; kill the noise
+   295  1199 8c0a90                 sty VIC_OSC1_FREQ                   ; sound off
+   296                          
+   297                          -
+   298  119c a922                   lda #UDG_PLANE                      ; draw the plane
+   299  119e 9130                   sta (PLANE),y
+   300  11a0 a906                   lda #COLOUR_BLUE
+   301  11a2 9132                   sta (PLANE_COLOUR),y
+   302                          
+   303  11a4 a932                   lda #50                             ; taxing slowly
+   304  11a6 202e14                 jsr DELAY
+   305                          
+   306  11a9 a925                   lda #UDG_SKY                        ; hide the old plane position
+   307  11ab 9130                   sta (PLANE),y
+   308                          
+   309  11ad e630                   inc PLANE_LSB                       ; move along one square
+   310  11af e632                   inc PLANE_COLOUR_LSB
+   311  11b1 d004                   bne +
+   312  11b3 e631                   inc PLANE_MSB
+   313  11b5 e633                   inc PLANE_COLOUR_MSB
+   314                          
+   315  11b7 a531               +   lda PLANE_MSB                       ; has the plane reached the far right edge?
+   316  11b9 c91f                   cmp #>GROUND_POS                    ;
+   317  11bb d004                   bne +                               ; different, so no need to check LSB
+   318  11bd a530                   lda PLANE_LSB                       ; compare LSB instead
+   319  11bf c9b8                   cmp #<GROUND_POS                    ;
+   320  11c1 90d9               +   bcc -                               ; no keep looping
+   321                          
+   322                              ; Plane has landed safely
+   323  11c3 e620                   inc SCORE                           ; increase score
+   324                          
+   325  11c5 a520                   lda SCORE                           ; has the user scored 10 landings?
+   326  11c7 c93a                   cmp #CHAR_10
+   327  11c9 d003                   bne +
+   328  11cb 4cef12                 jmp LANDED_10                       ; yes, celebrate
+   329                          +
+   330  11ce 4c6610                 jmp NEW_LEVEL                       ; start the next level
+   331                          
+   332                          
+   333                          ;======================================================================================
+   334                          ; oh, now we hit someone, Mrs Webb
+   335                          ;======================================================================================
+   336                          CRASHED:
+   337  11d1 a996                   lda #$96
+   338  11d3 8d0d90                 sta VIC_NOISE_FREQ
    339                          
-   340  11d6 a932               -   lda #50
-   341  11d8 8d0190                 sta VIC_VERTICAL_CENTRE
-   342                          
-   343  11db a919                   lda #25                             ; delay for 25
-   344  11dd 202614                 jsr DELAY
-   345                          
-   346  11e0 a91e                   lda #30
-   347  11e2 8d0190                 sta VIC_VERTICAL_CENTRE
-   348                          
-   349  11e5 a919                   lda #25                             ; delay for 25
-   350  11e7 202614                 jsr DELAY
-   351                          
-   352  11ea c602                   dec TEMP
-   353  11ec d0e8                   bne -
-   354                          
-   355  11ee ade5ed                 lda KERNAL_VIC_REGS_VC              ; restore the original value of vertical centering
-   356  11f1 8d0190                 sta VIC_VERTICAL_CENTRE
-   357                          
-   358                              ; flash the border
-   359  11f4 8402                   sty TEMP
-   360                          
-   361  11f6 a502               -   lda TEMP
-   362  11f8 8d0f90                 sta VIC_BORDER
-   363                          
-   364  11fb a932                   lda #50
-   365  11fd 202614                 jsr DELAY
-   366  1200 a932                   lda #50
-   367  1202 202614                 jsr DELAY
-   368                          
-   369  1205 a502                   lda TEMP
-   370  1207 18                     clc
-   371  1208 6916                   adc #22
-   372  120a 8502                   sta TEMP
-   373  120c 90e8                   bcc -
-   374                          
-   375  120e 8c0d90                 sty VIC_NOISE_FREQ                  ; stop the noise
-   376                          
-   377  1211 4ccf12                 jmp YOU_CRASHED
+   340                              ; shake the screen 10 times
+   341  11d6 a90a                   lda #10
+   342  11d8 8502                   sta TEMP
+   343                          
+   344  11da a932               -   lda #50
+   345  11dc 8d0190                 sta VIC_VERTICAL_CENTRE
+   346                          
+   347  11df a919                   lda #25                             ; delay for 25
+   348  11e1 202e14                 jsr DELAY
+   349                          
+   350  11e4 a91e                   lda #30
+   351  11e6 8d0190                 sta VIC_VERTICAL_CENTRE
+   352                          
+   353  11e9 a919                   lda #25                             ; delay for 25
+   354  11eb 202e14                 jsr DELAY
+   355                          
+   356  11ee c602                   dec TEMP
+   357  11f0 d0e8                   bne -
+   358                          
+   359  11f2 ade5ed                 lda KERNAL_VIC_REGS_VC              ; restore the original value of vertical centering
+   360  11f5 8d0190                 sta VIC_VERTICAL_CENTRE
+   361                          
+   362                              ; flash the border
+   363  11f8 8402                   sty TEMP
+   364                          
+   365  11fa a502               -   lda TEMP
+   366  11fc 8d0f90                 sta VIC_BORDER
+   367                          
+   368  11ff a932                   lda #50
+   369  1201 202e14                 jsr DELAY
+   370  1204 a932                   lda #50
+   371  1206 202e14                 jsr DELAY
+   372                          
+   373  1209 a502                   lda TEMP
+   374  120b 18                     clc
+   375  120c 6916                   adc #22
+   376  120e 8502                   sta TEMP
+   377  1210 90e8                   bcc -
    378                          
-   379                          ;======================================================================================
-   380                          ; Drop a bomb
-   381                          ;======================================================================================
-   382                          DROP_BOMB:
-   383  1214 a522                   lda BOMBS_TENS                      ; check bomb count
-   384  1216 c933                   cmp #CHAR_3                         ; max is 30
-   385  1218 9001                   bcc +
-   386  121a 60                     rts                                 ; max bombs used, do nothing
-   387                          
-   388                              ; drop the bomb
-   389  121b a530               +   lda PLANE_LSB                       ; bomb starts at plane position
-   390  121d 8534                   sta BOMB_LSB
-   391  121f 8536                   sta BOMB_COLOUR_LSB
-   392                          
-   393  1221 a531                   lda PLANE_MSB
-   394  1223 8535                   sta BOMB_MSB
-   395  1225 a533                   lda PLANE_COLOUR_MSB
-   396  1227 8537                   sta BOMB_COLOUR_MSB
-   397                          
-   398                          bombloop:
-   399  1229 a923                   lda #UDG_BOMB                       ; draw the bomb
-   400  122b 9134                   sta (BOMB),y
-   401  122d a902                   lda #COLOUR_RED                     ; colour the bomb
-   402  122f 9136                   sta (BOMB_COLOUR),y                
-   403  1231 a512                   lda BOMB_NOTE
-   404  1233 8d0a90                 sta VIC_OSC1_FREQ                   ; bomb in flight
-   405                          
-   406  1236 a90a                   lda #10                             ; delay for 10
-   407  1238 202614                 jsr DELAY
-   408                          
-   409  123b a925                   lda #UDG_SKY                        ; hide the bomb
-   410  123d 9134                   sta (BOMB),y
-   411                          
-   412  123f c612                   dec BOMB_NOTE                       ; change the bomb note
-   413  1241 c612                   dec BOMB_NOTE
-   414                          
-   415  1243 a016                   ldy #SCREEN_WIDTH                   ; check the line below
-   416  1245 b134                   lda (BOMB),y
-   417  1247 aa                     tax
-   418  1248 c921                   cmp #UDG_BUIDLING                   ; is it a building?
-   419  124a d024                   bne +
-   420  124c a02c                   ldy #SCREEN_WIDTH*2                 ; check 2 lines below
-   421  124e b134                   lda (BOMB),y
-   422  1250 c924                   cmp #UDG_GRASS                      ; grass below?
-   423  1252 d01c                   bne +
-   424                          
-   425  1254 c626                   dec BUILDINGS_STANDING              ; reduce the count of buildings
-   426  1256 e623                   inc BUILDINGS_UNITS                 ; increase count of toppled buildings
-   427  1258 a523                   lda BUILDINGS_UNITS                 ; check for rollovers
-   428  125a c93a                   cmp #CHAR_10
-   429  125c d012                   bne +
-   430  125e a930                   lda #CHAR_0                         ; 10, so units to 0 and increment 10s
-   431  1260 8523                   sta BUILDINGS_UNITS
-   432  1262 e624                   inc BUILDINGS_TENS
-   433  1264 a524                   lda BUILDINGS_TENS                  ; check for rollovers
-   434  1266 c93a                   cmp #CHAR_10
-   435  1268 d006                   bne +
-   436  126a a930                   lda #CHAR_0                         ; 100 so tens to 0 and increment 100s
-   437  126c 8524                   sta BUILDINGS_TENS
-   438  126e e625                   inc BUILDINGS_HUNDREDS              ; no I am not checking for 1000.
-   439                          
-   440  1270 a000               +   ldy #0                              ; restore order to the universe
-   441  1272 e026                   cpx #UDG_ROOF                       ; is there a roof below us?
-   442  1274 d005                   bne +
-   443  1276 a982                   lda #$82                            ; make the crunching noise
-   444  1278 8d0d90                 sta VIC_NOISE_FREQ
-   445                          
-   446  127b a534               +   lda BOMB_LSB                        ; move bomb down 1 line
-   447  127d 18                     clc
-   448  127e 6916                   adc #SCREEN_WIDTH
-   449  1280 8534                   sta BOMB_LSB
-   450  1282 8536                   sta BOMB_COLOUR_LSB
-   451  1284 9004                   bcc +
-   452  1286 e635                   inc BOMB_MSB
-   453  1288 e637                   inc BOMB_COLOUR_MSB
-   454                          
-   455  128a a535               +   lda BOMB_MSB                        ; check if it is at ground level
-   456  128c c91f                   cmp #>GROUND_POS                    ;
-   457  128e d004                   bne +                               ; different, so no need to check LSB
-   458  1290 a534                   lda BOMB_LSB                        ; compare LSB instead
-   459  1292 c9b8                   cmp #<GROUND_POS                    ;
-   460  1294 9093               +   bcc bombloop                        ; no, keep moving down
-   461                          
-   462                              ; bomb landed
-   463  1296 a203                   ldx #3                              ; get a random number from 0 to 2
-   464  1298 203014                 jsr RND
+   379  1212 8c0d90                 sty VIC_NOISE_FREQ                  ; stop the noise
+   380                          
+   381  1215 4cd712                 jmp YOU_CRASHED
+   382                          
+   383                          ;======================================================================================
+   384                          ; Drop a bomb
+   385                          ;======================================================================================
+   386                          DROP_BOMB:
+   387  1218 a522                   lda BOMBS_TENS                      ; check bomb count
+   388  121a c933                   cmp #CHAR_3                         ; max is 30
+   389  121c 9001                   bcc +
+   390  121e 60                     rts                                 ; max bombs used, do nothing
+   391                          
+   392                              ; drop the bomb
+   393  121f a530               +   lda PLANE_LSB                       ; bomb starts at plane position
+   394  1221 8534                   sta BOMB_LSB
+   395  1223 8536                   sta BOMB_COLOUR_LSB
+   396                          
+   397  1225 a531                   lda PLANE_MSB
+   398  1227 8535                   sta BOMB_MSB
+   399  1229 a533                   lda PLANE_COLOUR_MSB
+   400  122b 8537                   sta BOMB_COLOUR_MSB
+   401                          
+   402                          bombloop:
+   403  122d a923                   lda #UDG_BOMB                       ; draw the bomb
+   404  122f 9134                   sta (BOMB),y
+   405  1231 a902                   lda #COLOUR_RED                     ; colour the bomb
+   406  1233 9136                   sta (BOMB_COLOUR),y                
+   407  1235 a512                   lda BOMB_NOTE
+   408  1237 8d0a90                 sta VIC_OSC1_FREQ                   ; bomb in flight
+   409                          
+   410  123a a90a                   lda #10                             ; delay for 10
+   411  123c 202e14                 jsr DELAY
+   412                          
+   413  123f a925                   lda #UDG_SKY                        ; hide the bomb
+   414  1241 9134                   sta (BOMB),y
+   415                          
+   416  1243 c612                   dec BOMB_NOTE                       ; change the bomb note
+   417  1245 c612                   dec BOMB_NOTE
+   418                          
+   419  1247 a016                   ldy #SCREEN_WIDTH                   ; check the line below
+   420  1249 b134                   lda (BOMB),y
+   421  124b aa                     tax
+   422  124c c921                   cmp #UDG_BUIDLING                   ; is it a building?
+   423  124e d024                   bne +
+   424  1250 a02c                   ldy #SCREEN_WIDTH*2                 ; check 2 lines below
+   425  1252 b134                   lda (BOMB),y
+   426  1254 c924                   cmp #UDG_GRASS                      ; grass below?
+   427  1256 d01c                   bne +
+   428                          
+   429  1258 c626                   dec BUILDINGS_STANDING              ; reduce the count of buildings
+   430  125a e623                   inc BUILDINGS_UNITS                 ; increase count of toppled buildings
+   431  125c a523                   lda BUILDINGS_UNITS                 ; check for rollovers
+   432  125e c93a                   cmp #CHAR_10
+   433  1260 d012                   bne +
+   434  1262 a930                   lda #CHAR_0                         ; 10, so units to 0 and increment 10s
+   435  1264 8523                   sta BUILDINGS_UNITS
+   436  1266 e624                   inc BUILDINGS_TENS
+   437  1268 a524                   lda BUILDINGS_TENS                  ; check for rollovers
+   438  126a c93a                   cmp #CHAR_10
+   439  126c d006                   bne +
+   440  126e a930                   lda #CHAR_0                         ; 100 so tens to 0 and increment 100s
+   441  1270 8524                   sta BUILDINGS_TENS
+   442  1272 e625                   inc BUILDINGS_HUNDREDS              ; no I am not checking for 1000.
+   443                          
+   444  1274 a000               +   ldy #0                              ; restore order to the universe
+   445  1276 e026                   cpx #UDG_ROOF                       ; is there a roof below us?
+   446  1278 d005                   bne +
+   447  127a a982                   lda #$82                            ; make the crunching noise
+   448  127c 8d0d90                 sta VIC_NOISE_FREQ
+   449                          
+   450  127f a534               +   lda BOMB_LSB                        ; move bomb down 1 line
+   451  1281 18                     clc
+   452  1282 6916                   adc #SCREEN_WIDTH
+   453  1284 8534                   sta BOMB_LSB
+   454  1286 8536                   sta BOMB_COLOUR_LSB
+   455  1288 9004                   bcc +
+   456  128a e635                   inc BOMB_MSB
+   457  128c e637                   inc BOMB_COLOUR_MSB
+   458                          
+   459  128e a535               +   lda BOMB_MSB                        ; check if it is at ground level
+   460  1290 c91f                   cmp #>GROUND_POS                    ;
+   461  1292 d004                   bne +                               ; different, so no need to check LSB
+   462  1294 a534                   lda BOMB_LSB                        ; compare LSB instead
+   463  1296 c9b8                   cmp #<GROUND_POS                    ;
+   464  1298 9093               +   bcc bombloop                        ; no, keep moving down
    465                          
-   466  129b 18                     clc                                 ; move plane by that amount
-   467  129c 6530                   adc PLANE_LSB
-   468  129e 8530                   sta PLANE_LSB
-   469  12a0 8532                   sta PLANE_COLOUR_LSB
-   470  12a2 9004                   bcc +
-   471  12a4 e631                   inc PLANE_MSB
-   472  12a6 e633                   inc PLANE_COLOUR_MSB
-   473                          +
-   474                          
-   475  12a8 e621                   inc BOMBS_UNITS                     ; bombs used count++
-   476  12aa a521                   lda BOMBS_UNITS                     ; check for rollovers
-   477  12ac c93a                   cmp #CHAR_10
-   478  12ae d014                   bne +
-   479  12b0 a930                   lda #CHAR_0                         ; 10, so units to 0 and increment 10s
-   480  12b2 8521                   sta BOMBS_UNITS
-   481  12b4 e622                   inc BOMBS_TENS                      ; max is 30, so no rollover to check
-   482  12b6 a522                   lda BOMBS_TENS                      ; check bomb count
-   483  12b8 c933                   cmp #CHAR_3                         ; max is 30
-   484  12ba 9008                   bcc +
-   485  12bc a902                   lda #COLOUR_RED                     ; max bombs used, set the display red
-   486  12be 8dda97                 sta SCREEN_B_TENS + COLOUR_RAM_OFFSET
-   487  12c1 8ddb97                 sta SCREEN_B_UNITS + COLOUR_RAM_OFFSET
-   488                          
-   489  12c4 a9fe               +   lda #$FE                            ; reset bomb note
-   490  12c6 8512                   sta BOMB_NOTE
-   491                          
-   492  12c8 8c0a90                 sty VIC_OSC1_FREQ                   ; sound off
-   493  12cb 8c0d90                 sty VIC_NOISE_FREQ                  ; noise off
-   494                          
-   495  12ce 60                     rts
-   496                          
-   497                          ;======================================================================================
-   498                          ; Tell the pilot how bad they really are
-   499                          ;======================================================================================
-   500                          YOU_CRASHED:
-   501  12cf 209613                 jsr SUB_START_TEXT_SCREEN
-   502                          
-   503  12d2 a915                   lda #>TEXT_CRASHED
-   504  12d4 8539                   sta TEXT_MSB
-   505  12d6 a978                   lda #<TEXT_CRASHED
-   506  12d8 8538                   sta TEXT_LSB
-   507                          
-   508  12da a91e                   lda #>SCREEN_RAM_LINE_00
-   509  12dc a200                   ldx #<SCREEN_RAM_LINE_00
-   510  12de 201614                 jsr SUB_PRINT_STRING
-   511                          
-   512  12e1 20a913                 jsr SUB_SHOW_STATS
-   513                          
-   514  12e4 4c0613                 jmp ANOTHER_GO
-   515                          
-   516                          ;======================================================================================
-   517                          ; 10 landings, well done
-   518                          ;======================================================================================
-   519                          LANDED_10:
-   520  12e7 209613                 jsr SUB_START_TEXT_SCREEN
-   521                          
-   522  12ea a916                   lda #>TEXT_LANDED
-   523  12ec 8539                   sta TEXT_MSB
-   524  12ee a913                   lda #<TEXT_LANDED
-   525  12f0 8538                   sta TEXT_LSB
-   526                          
-   527  12f2 a91e                   lda #>SCREEN_RAM_LINE_00
-   528  12f4 a200                   ldx #<SCREEN_RAM_LINE_00
-   529  12f6 201614                 jsr SUB_PRINT_STRING
-   530                          
-   531  12f9 20a913                 jsr SUB_SHOW_STATS
-   532                          
-   533                              ; fix the score
-   534  12fc a931                   lda #CHAR_1
-   535  12fe 8dc81e                 sta SCREEN_RAM_LINE_09 + 2
-   536  1301 a930                   lda #CHAR_0
-   537  1303 8dc91e                 sta SCREEN_RAM_LINE_09 + 3
-   538                          
-   539                              ; drop through
-   540                          
-   541                          ;======================================================================================
-   542                          ; Another go, start or go to READY prompt
-   543                          ;======================================================================================
-   544                          ANOTHER_GO:
-   545                              ; another go?
-   546  1306 a914                   lda #>TEXT_ANOTHER_GO
-   547  1308 8539                   sta TEXT_MSB
-   548  130a a9d2                   lda #<TEXT_ANOTHER_GO
-   549  130c 8538                   sta TEXT_LSB
-   550                          
-   551  130e a91f                   lda #>SCREEN_RAM_LINE_20 + 2
-   552  1310 a2ba                   ldx #<SCREEN_RAM_LINE_20 + 2
-   553  1312 201614                 jsr SUB_PRINT_STRING
-   554                          
-   555  1315 a5c5               -   lda LAST_KEY                        ; wait for key press
-   556  1317 c940                   cmp #KEY_NONE
-   557  1319 f0fa                   beq -
-   558                          
-   559  131b c90b                   cmp #KEY_Y                          ; was it Y ?
-   560  131d f007                   beq RESTART
+   466                              ; bomb landed
+   467                              ; get a random number from 0-2
+   468  129a 203814             -   jsr RAND16                          ; get a random number
+   469  129d 2903                   and #3                              ; mask to 0-3
+   470  129f c902                   cmp #2                              ; repeat if 3
+   471  12a1 b0f7                   bcs -
+   472                              
+   473  12a3 18                     clc                                 ; move plane by that amount
+   474  12a4 6530                   adc PLANE_LSB
+   475  12a6 8530                   sta PLANE_LSB
+   476  12a8 8532                   sta PLANE_COLOUR_LSB
+   477  12aa 9004                   bcc +
+   478  12ac e631                   inc PLANE_MSB
+   479  12ae e633                   inc PLANE_COLOUR_MSB
+   480                          +
+   481                          
+   482  12b0 e621                   inc BOMBS_UNITS                     ; bombs used count++
+   483  12b2 a521                   lda BOMBS_UNITS                     ; check for rollovers
+   484  12b4 c93a                   cmp #CHAR_10
+   485  12b6 d014                   bne +
+   486  12b8 a930                   lda #CHAR_0                         ; 10, so units to 0 and increment 10s
+   487  12ba 8521                   sta BOMBS_UNITS
+   488  12bc e622                   inc BOMBS_TENS                      ; max is 30, so no rollover to check
+   489  12be a522                   lda BOMBS_TENS                      ; check bomb count
+   490  12c0 c933                   cmp #CHAR_3                         ; max is 30
+   491  12c2 9008                   bcc +
+   492  12c4 a902                   lda #COLOUR_RED                     ; max bombs used, set the display red
+   493  12c6 8dda97                 sta SCREEN_B_TENS + COLOUR_RAM_OFFSET
+   494  12c9 8ddb97                 sta SCREEN_B_UNITS + COLOUR_RAM_OFFSET
+   495                          
+   496  12cc a9fe               +   lda #$FE                            ; reset bomb note
+   497  12ce 8512                   sta BOMB_NOTE
+   498                          
+   499  12d0 8c0a90                 sty VIC_OSC1_FREQ                   ; sound off
+   500  12d3 8c0d90                 sty VIC_NOISE_FREQ                  ; noise off
+   501                          
+   502  12d6 60                     rts
+   503                          
+   504                          ;======================================================================================
+   505                          ; Tell the pilot how bad they really are
+   506                          ;======================================================================================
+   507                          YOU_CRASHED:
+   508  12d7 209e13                 jsr SUB_START_TEXT_SCREEN
+   509                          
+   510  12da a915                   lda #>TEXT_CRASHED
+   511  12dc 8539                   sta TEXT_MSB
+   512  12de a972                   lda #<TEXT_CRASHED
+   513  12e0 8538                   sta TEXT_LSB
+   514                          
+   515  12e2 a91e                   lda #>SCREEN_RAM_LINE_00
+   516  12e4 a200                   ldx #<SCREEN_RAM_LINE_00
+   517  12e6 201e14                 jsr SUB_PRINT_STRING
+   518                          
+   519  12e9 20b113                 jsr SUB_SHOW_STATS
+   520                          
+   521  12ec 4c0e13                 jmp ANOTHER_GO
+   522                          
+   523                          ;======================================================================================
+   524                          ; 10 landings, well done
+   525                          ;======================================================================================
+   526                          LANDED_10:
+   527  12ef 209e13                 jsr SUB_START_TEXT_SCREEN
+   528                          
+   529  12f2 a916                   lda #>TEXT_LANDED
+   530  12f4 8539                   sta TEXT_MSB
+   531  12f6 a90d                   lda #<TEXT_LANDED
+   532  12f8 8538                   sta TEXT_LSB
+   533                          
+   534  12fa a91e                   lda #>SCREEN_RAM_LINE_00
+   535  12fc a200                   ldx #<SCREEN_RAM_LINE_00
+   536  12fe 201e14                 jsr SUB_PRINT_STRING
+   537                          
+   538  1301 20b113                 jsr SUB_SHOW_STATS
+   539                          
+   540                              ; fix the score
+   541  1304 a931                   lda #CHAR_1
+   542  1306 8dc81e                 sta SCREEN_RAM_LINE_09 + 2
+   543  1309 a930                   lda #CHAR_0
+   544  130b 8dc91e                 sta SCREEN_RAM_LINE_09 + 3
+   545                          
+   546                              ; drop through
+   547                          
+   548                          ;======================================================================================
+   549                          ; Another go, start or go to READY prompt
+   550                          ;======================================================================================
+   551                          ANOTHER_GO:
+   552                              ; another go?
+   553  130e a914                   lda #>TEXT_ANOTHER_GO
+   554  1310 8539                   sta TEXT_MSB
+   555  1312 a9cc                   lda #<TEXT_ANOTHER_GO
+   556  1314 8538                   sta TEXT_LSB
+   557                          
+   558  1316 a91f                   lda #>SCREEN_RAM_LINE_20 + 2
+   559  1318 a2ba                   ldx #<SCREEN_RAM_LINE_20 + 2
+   560  131a 201e14                 jsr SUB_PRINT_STRING
    561                          
-   562  131f c91c                   cmp #KEY_N                          ; was it N?
-   563  1321 d0f2                   bne -                               ; no, keep checking
-   564                          
-   565  1323 4c22fd                 jmp KERNAL_START                    ; N = reset VIC to READY prompt
-   566                          
-   567                          RESTART:
-   568  1326 4c3c10                 jmp start                           ; Y = start again
-   569                          
-   570                          
-   571                          ;======================================================================================
-   572                          ; Pause
-   573                          ;======================================================================================
-   574                          SUB_PAUSE:
-   575  1329 8c0d90                 sty VIC_NOISE_FREQ                  ; kill the noise
-   576  132c 8c0a90                 sty VIC_OSC1_FREQ                   ;
+   562  131d a5c5               -   lda LAST_KEY                        ; wait for key press
+   563  131f c940                   cmp #KEY_NONE
+   564  1321 f0fa                   beq -
+   565                          
+   566  1323 c90b                   cmp #KEY_Y                          ; was it Y ?
+   567  1325 f007                   beq RESTART
+   568                          
+   569  1327 c91c                   cmp #KEY_N                          ; was it N?
+   570  1329 d0f2                   bne -                               ; no, keep checking
+   571                          
+   572  132b 4c22fd                 jmp KERNAL_START                    ; N = reset VIC to READY prompt
+   573                          
+   574                          RESTART:
+   575  132e 4c3c10                 jmp start                           ; Y = start again
+   576                          
    577                          
-   578  132f a5c5               -   lda LAST_KEY                        ; wait for key release
-   579  1331 c940                   cmp #KEY_NONE
-   580  1333 d0fa                   bne -
-   581                          
-   582  1335 a5c5               -   lda LAST_KEY                        ; wait for key press
-   583  1337 c940                   cmp #KEY_NONE
-   584  1339 f0fa                   beq -
-   585                          
-   586  133b a5c5               -   lda LAST_KEY                        ; wait for key release
-   587  133d c940                   cmp #KEY_NONE
-   588  133f d0fa                   bne -
-   589                          
-   590  1341 a9f5                   lda #$F5                            ; make the noise
-   591  1343 8c0d90                 sty VIC_NOISE_FREQ
+   578                          ;======================================================================================
+   579                          ; Pause
+   580                          ;======================================================================================
+   581                          SUB_PAUSE:
+   582  1331 8c0d90                 sty VIC_NOISE_FREQ                  ; kill the noise
+   583  1334 8c0a90                 sty VIC_OSC1_FREQ                   ;
+   584                          
+   585  1337 a5c5               -   lda LAST_KEY                        ; wait for key release
+   586  1339 c940                   cmp #KEY_NONE
+   587  133b d0fa                   bne -
+   588                          
+   589  133d a5c5               -   lda LAST_KEY                        ; wait for key press
+   590  133f c940                   cmp #KEY_NONE
+   591  1341 f0fa                   beq -
    592                          
-   593  1346 60                     rts
-   594                          
-   595                          
-   596                          ;======================================================================================
-   597                          ; Show the title page
-   598                          ;======================================================================================
-   599                          SUB_TITLE:
-   600  1347 209613                 jsr SUB_START_TEXT_SCREEN
+   593  1343 a5c5               -   lda LAST_KEY                        ; wait for key release
+   594  1345 c940                   cmp #KEY_NONE
+   595  1347 d0fa                   bne -
+   596                          
+   597  1349 a9f5                   lda #$F5                            ; make the noise
+   598  134b 8c0d90                 sty VIC_NOISE_FREQ
+   599                          
+   600  134e 60                     rts
    601                          
-   602  134a a914                   lda #>TEXT_BUNNY_BLITZ
-   603  134c 8539                   sta TEXT_MSB
-   604  134e a982                   lda #<TEXT_BUNNY_BLITZ
-   605  1350 8538                   sta TEXT_LSB
-   606                          
-   607  1352 a91e                   lda #>SCREEN_RAM_LINE_00 + 5
-   608  1354 a205                   ldx #<SCREEN_RAM_LINE_00 + 5
-   609  1356 201614                 jsr SUB_PRINT_STRING
-   610                          
-   611  1359 a914                   lda #>TEXT_BY_ME
-   612  135b 8539                   sta TEXT_MSB
-   613  135d a98e                   lda #<TEXT_BY_ME
-   614  135f 8538                   sta TEXT_LSB
-   615                          
-   616  1361 a91e                   lda #>SCREEN_RAM_LINE_02 + 3
-   617  1363 a22f                   ldx #<SCREEN_RAM_LINE_02 + 3
-   618  1365 201614                 jsr SUB_PRINT_STRING
-   619                          
-   620  1368 a914                   lda #>TEXT_BASED_ON
-   621  136a 8539                   sta TEXT_MSB
-   622  136c a99f                   lda #<TEXT_BASED_ON
-   623  136e 8538                   sta TEXT_LSB
-   624                          
-   625  1370 a91e                   lda #>SCREEN_RAM_LINE_04
-   626  1372 a258                   ldx #<SCREEN_RAM_LINE_04
-   627  1374 201614                 jsr SUB_PRINT_STRING
-   628                          
-   629  1377 20a913                 jsr SUB_SHOW_STATS
-   630                          
-   631                              ; press the any key
-   632  137a a914                   lda #>TEXT_PRESS_A_KEY
-   633  137c 8539                   sta TEXT_MSB
-   634  137e a9c6                   lda #<TEXT_PRESS_A_KEY
-   635  1380 8538                   sta TEXT_LSB
-   636                          
-   637  1382 a91f                   lda #>SCREEN_RAM_LINE_20 + 6
-   638  1384 a2be                   ldx #<SCREEN_RAM_LINE_20 + 6
-   639  1386 201614                 jsr SUB_PRINT_STRING
-   640                          
-   641  1389 a5c5               -   lda LAST_KEY                        ; wait for key press
-   642  138b c940                   cmp #KEY_NONE
-   643  138d f0fa                   beq -
-   644                          
-   645  138f a5c5               -   lda LAST_KEY                        ; wait for key release
-   646  1391 c940                   cmp #KEY_NONE
-   647  1393 d0fa                   bne -
-   648                          
-   649  1395 60                     rts
-   650                          
+   602                          
+   603                          ;======================================================================================
+   604                          ; Show the title page
+   605                          ;======================================================================================
+   606                          SUB_TITLE:
+   607  134f 209e13                 jsr SUB_START_TEXT_SCREEN
+   608                          
+   609  1352 a914                   lda #>TEXT_BUNNY_BLITZ
+   610  1354 8539                   sta TEXT_MSB
+   611  1356 a97c                   lda #<TEXT_BUNNY_BLITZ
+   612  1358 8538                   sta TEXT_LSB
+   613                          
+   614  135a a91e                   lda #>SCREEN_RAM_LINE_00 + 5
+   615  135c a205                   ldx #<SCREEN_RAM_LINE_00 + 5
+   616  135e 201e14                 jsr SUB_PRINT_STRING
+   617                          
+   618  1361 a914                   lda #>TEXT_BY_ME
+   619  1363 8539                   sta TEXT_MSB
+   620  1365 a988                   lda #<TEXT_BY_ME
+   621  1367 8538                   sta TEXT_LSB
+   622                          
+   623  1369 a91e                   lda #>SCREEN_RAM_LINE_02 + 3
+   624  136b a22f                   ldx #<SCREEN_RAM_LINE_02 + 3
+   625  136d 201e14                 jsr SUB_PRINT_STRING
+   626                          
+   627  1370 a914                   lda #>TEXT_BASED_ON
+   628  1372 8539                   sta TEXT_MSB
+   629  1374 a999                   lda #<TEXT_BASED_ON
+   630  1376 8538                   sta TEXT_LSB
+   631                          
+   632  1378 a91e                   lda #>SCREEN_RAM_LINE_04
+   633  137a a258                   ldx #<SCREEN_RAM_LINE_04
+   634  137c 201e14                 jsr SUB_PRINT_STRING
+   635                          
+   636  137f 20b113                 jsr SUB_SHOW_STATS
+   637                          
+   638                              ; press the any key
+   639  1382 a914                   lda #>TEXT_PRESS_A_KEY
+   640  1384 8539                   sta TEXT_MSB
+   641  1386 a9c0                   lda #<TEXT_PRESS_A_KEY
+   642  1388 8538                   sta TEXT_LSB
+   643                          
+   644  138a a91f                   lda #>SCREEN_RAM_LINE_20 + 6
+   645  138c a2be                   ldx #<SCREEN_RAM_LINE_20 + 6
+   646  138e 201e14                 jsr SUB_PRINT_STRING
+   647                          
+   648  1391 a5c5               -   lda LAST_KEY                        ; wait for key press
+   649  1393 c940                   cmp #KEY_NONE
+   650  1395 f0fa                   beq -
    651                          
-   652                          ;======================================================================================
-   653                          ; Start a text screen, black background, white text
-   654                          ;======================================================================================
-   655                          SUB_START_TEXT_SCREEN:
-   656  1396 a940                   lda #KEY_NONE                       ; clear last keypress
-   657  1398 85c5                   sta LAST_KEY
+   652  1397 a5c5               -   lda LAST_KEY                        ; wait for key release
+   653  1399 c940                   cmp #KEY_NONE
+   654  139b d0fa                   bne -
+   655                          
+   656  139d 60                     rts
+   657                          
    658                          
-   659  139a 20ff13                 jsr SUB_CLS                         ; clear the screen
-   660                          
-   661  139d a908                   lda #8                              ; black border and background
-   662  139f 8d0f90                 sta VIC_BORDER
-   663                          
-   664  13a2 8c0a90                 sty VIC_OSC1_FREQ                   ; sound off
-   665  13a5 8c0d90                 sty VIC_NOISE_FREQ                  ; noise off
-   666                          
-   667  13a8 60                     rts
-   668                          
-   669                          ;======================================================================================
-   670                          ; Show the user stats on a text page
-   671                          ;======================================================================================
-   672                          SUB_SHOW_STATS:
-   673                              ; planes landed
-   674  13a9 a915                   lda #>TEXT_PLANES
-   675  13ab 8539                   sta TEXT_MSB
-   676  13ad a94d                   lda #<TEXT_PLANES
-   677  13af 8538                   sta TEXT_LSB
-   678                          
-   679  13b1 a91e                   lda #>SCREEN_RAM_LINE_09
-   680  13b3 a2c6                   ldx #<SCREEN_RAM_LINE_09
-   681  13b5 201614                 jsr SUB_PRINT_STRING
-   682                          
-   683  13b8 a906                   lda #COLOUR_BLUE
-   684  13ba 8dc696                 sta SCREEN_RAM_LINE_09 + COLOUR_RAM_OFFSET
+   659                          ;======================================================================================
+   660                          ; Start a text screen, black background, white text
+   661                          ;======================================================================================
+   662                          SUB_START_TEXT_SCREEN:
+   663  139e a940                   lda #KEY_NONE                       ; clear last keypress
+   664  13a0 85c5                   sta LAST_KEY
+   665                          
+   666  13a2 200714                 jsr SUB_CLS                         ; clear the screen
+   667                          
+   668  13a5 a908                   lda #8                              ; black border and background
+   669  13a7 8d0f90                 sta VIC_BORDER
+   670                          
+   671  13aa 8c0a90                 sty VIC_OSC1_FREQ                   ; sound off
+   672  13ad 8c0d90                 sty VIC_NOISE_FREQ                  ; noise off
+   673                          
+   674  13b0 60                     rts
+   675                          
+   676                          ;======================================================================================
+   677                          ; Show the user stats on a text page
+   678                          ;======================================================================================
+   679                          SUB_SHOW_STATS:
+   680                              ; planes landed
+   681  13b1 a915                   lda #>TEXT_PLANES
+   682  13b3 8539                   sta TEXT_MSB
+   683  13b5 a947                   lda #<TEXT_PLANES
+   684  13b7 8538                   sta TEXT_LSB
    685                          
-   686  13bd a520                   lda SCORE
-   687  13bf 8dc81e                 sta SCREEN_RAM_LINE_09 + 2
-   688                          
-   689                              ; bombs dropped
-   690  13c2 a915                   lda #>TEXT_BOMBS
-   691  13c4 8539                   sta TEXT_MSB
-   692  13c6 a922                   lda #<TEXT_BOMBS
-   693  13c8 8538                   sta TEXT_LSB
-   694                          
-   695  13ca a91f                   lda #>SCREEN_RAM_LINE_12
-   696  13cc a208                   ldx #<SCREEN_RAM_LINE_12
-   697  13ce 201614                 jsr SUB_PRINT_STRING
-   698                          
-   699  13d1 a902                   lda #COLOUR_RED
-   700  13d3 8d0897                 sta SCREEN_RAM_LINE_12 + COLOUR_RAM_OFFSET
+   686  13b9 a91e                   lda #>SCREEN_RAM_LINE_09
+   687  13bb a2c6                   ldx #<SCREEN_RAM_LINE_09
+   688  13bd 201e14                 jsr SUB_PRINT_STRING
+   689                          
+   690  13c0 a906                   lda #COLOUR_BLUE
+   691  13c2 8dc696                 sta SCREEN_RAM_LINE_09 + COLOUR_RAM_OFFSET
+   692                          
+   693  13c5 a520                   lda SCORE
+   694  13c7 8dc81e                 sta SCREEN_RAM_LINE_09 + 2
+   695                          
+   696                              ; bombs dropped
+   697  13ca a915                   lda #>TEXT_BOMBS
+   698  13cc 8539                   sta TEXT_MSB
+   699  13ce a91c                   lda #<TEXT_BOMBS
+   700  13d0 8538                   sta TEXT_LSB
    701                          
-   702  13d6 a522                   lda BOMBS_TENS
-   703  13d8 8d0a1f                 sta SCREEN_RAM_LINE_12 + 2
-   704  13db a521                   lda BOMBS_UNITS
-   705  13dd 8d0b1f                 sta SCREEN_RAM_LINE_12 + 3
-   706                          
-   707                              ; buildings flattened
-   708  13e0 a914                   lda #>TEXT_BUILDINGS
-   709  13e2 8539                   sta TEXT_MSB
-   710  13e4 a9e4                   lda #<TEXT_BUILDINGS
-   711  13e6 8538                   sta TEXT_LSB
-   712                          
-   713  13e8 a91f                   lda #>SCREEN_RAM_LINE_15
-   714  13ea a24a                   ldx #<SCREEN_RAM_LINE_15
-   715  13ec 201614                 jsr SUB_PRINT_STRING
-   716                          
-   717  13ef a525                   lda BUILDINGS_HUNDREDS
-   718  13f1 8d621f                 sta SCREEN_RAM_LINE_16 + 2
-   719  13f4 a524                   lda BUILDINGS_TENS
-   720  13f6 8d631f                 sta SCREEN_RAM_LINE_16 + 3
-   721  13f9 a523                   lda BUILDINGS_UNITS
-   722  13fb 8d641f                 sta SCREEN_RAM_LINE_16 + 4
+   702  13d2 a91f                   lda #>SCREEN_RAM_LINE_12
+   703  13d4 a208                   ldx #<SCREEN_RAM_LINE_12
+   704  13d6 201e14                 jsr SUB_PRINT_STRING
+   705                          
+   706  13d9 a902                   lda #COLOUR_RED
+   707  13db 8d0897                 sta SCREEN_RAM_LINE_12 + COLOUR_RAM_OFFSET
+   708                          
+   709  13de a522                   lda BOMBS_TENS
+   710  13e0 8d0a1f                 sta SCREEN_RAM_LINE_12 + 2
+   711  13e3 a521                   lda BOMBS_UNITS
+   712  13e5 8d0b1f                 sta SCREEN_RAM_LINE_12 + 3
+   713                          
+   714                              ; buildings flattened
+   715  13e8 a914                   lda #>TEXT_BUILDINGS
+   716  13ea 8539                   sta TEXT_MSB
+   717  13ec a9de                   lda #<TEXT_BUILDINGS
+   718  13ee 8538                   sta TEXT_LSB
+   719                          
+   720  13f0 a91f                   lda #>SCREEN_RAM_LINE_15
+   721  13f2 a24a                   ldx #<SCREEN_RAM_LINE_15
+   722  13f4 201e14                 jsr SUB_PRINT_STRING
    723                          
-   724  13fe 60                     rts
-   725                          
-   726                          ;======================================================================================
-   727                          ; Clear the screen
-   728                          ;======================================================================================
-   729                          SUB_CLS:
-   730  13ff a920                   lda #CHAR_SPACE                     ; clear screen
-   731  1401 99001e             -   sta SCREEN_RAM_PAGE0,y
-   732  1404 99001f                 sta SCREEN_RAM_PAGE1,y
-   733  1407 c8                     iny
-   734  1408 d0f7                   bne -
-   735                          
-   736  140a a901                   lda #COLOUR_WHITE                   ; clear colour RAM
-   737  140c 990096             -   sta COLOUR_RAM_PAGE0,y
-   738  140f 990097                 sta COLOUR_RAM_PAGE1,y
-   739  1412 c8                     iny
-   740  1413 d0f7                   bne -
-   741                          
-   742  1415 60                     rts
-   743                          
-   744                          ;======================================================================================
-   745                          ; Print a string
-   746                          ; string pointed to by TEXT_MSB & TEXT_LSB
-   747                          ; location A=MSB, X=LSB, (and Y=0 as is the law)
-   748                          ;======================================================================================
-   749                          SUB_PRINT_STRING:
-   750  1416 853b                   sta TEXT_POS_MSB
-   751  1418 863a                   stx TEXT_POS_LSB
-   752                          
-   753  141a b138               -   lda (TEXT),y                        ; load the next character
-   754  141c f005                   beq +                               ; exit if 0
-   755  141e 913a                   sta (TEXT_POS),y                    ; display the character
-   756  1420 c8                     iny                                 ; next character
-   757  1421 d0f7                   bne -                               ; loop back (will stop after 256 chars in no 0)
-   758                          
-   759  1423 a000               +   ldy #0                              ; reset y
-   760  1425 60                     rts
-   761                          
-   762                          ;======================================================================================
-   763                          ; Delay the equivalent of FOR N=1 TO A : NEXT N
-   764                          ; For 0<A<63
-   765                          ; Clears X and Y
-   766                          ;======================================================================================
-   767                          DELAY:
-   768  1426 0a                     asl                                 ; loop A*4*256
-   769  1427 0a                     asl                                 ;
-   770  1428 aa                     tax                                 ;
-   771  1429 88                 -   dey                                 ;
-   772  142a d0fd                   bne -                               ;
-   773  142c ca                     dex                                 ;
-   774  142d d0fa                   bne -                               ;
-   775  142f 60                     rts                                 ;
-   776                          
-   777                          ;======================================================================================
-   778                          ; Return a random number from 0 to X-1 in A
-   779                          ; Where 0 < X < 8
-   780                          ; Start at 0 and add 1 for each 1 in X bits of the 8 bit random number
-   781                          ;======================================================================================
-   782                          RND:
-   783  1430 203e14                 jsr RAND16                          ; get a random number in A
-   784  1433 8502                   sta TEMP                            ; store in temporary location
-   785  1435 98                     tya                                 ; A=0
-   786  1436 4602               -   lsr TEMP                            ; 0 -> TEMP -> carry
-   787  1438 6900                   adc #0                              ; A=A+0+carry
-   788  143a ca                     dex                                 ;
-   789  143b d0f9                   bne -                               ; loop back
-   790  143d 60                     rts                                 ; return with value in A
-   791                          
-   792                          ;======================================================================================
-   793                          ; Pseudo-random-number generator. You can get 8-bit random numbers in A
-   794                          ; or 16-bit numbers from the zero page addresses. Leaves X/Y unchanged.
-   795                          ;
-   796                          ; (36 clock cycles)
-   797                          ;
-   798                          ; See
-   799                          ; https://web.archive.org/web/20250328001550/https://codebase64.org/doku.php?id=base:16bit_xorshift_random_generator
-   800                          ; and
-   801                          ; https://github.com/markgbeckett/pet/tree/main/examples
-   802                          ;======================================================================================
-   803                          RAND16:
-   804  143e a508                   lda SEED_MSB                        ; (3)
-   805  1440 4a                     lsr			                        ; (2)
-   806  1441 a507                   lda SEED_LSB	                    ; (3)
-   807  1443 6a                     ror			                        ; (2)
-   808  1444 4508                   eor SEED_MSB	                    ; (3)
-   809  1446 8508                   sta SEED_MSB	                    ; (3) high part of x ^= x << 7 done
-   810  1448 6a                     ror             	                ; (2) A has now x >> 9 and high bit comes from low byte
-   811  1449 4507                   eor SEED_LSB	                    ; (3)
-   812  144b 8507                   sta SEED_LSB	                    ; (3) x ^= x >> 9 and the low part of x ^= x << 7 done
-   813  144d 4508                   eor SEED_MSB	                    ; (3)
-   814  144f 8508                   sta SEED_MSB	                    ; (3) x ^= x << 8 done
-   815                          
-   816  1451 60                     rts			                        ; (6)
+   724  13f7 a525                   lda BUILDINGS_HUNDREDS
+   725  13f9 8d621f                 sta SCREEN_RAM_LINE_16 + 2
+   726  13fc a524                   lda BUILDINGS_TENS
+   727  13fe 8d631f                 sta SCREEN_RAM_LINE_16 + 3
+   728  1401 a523                   lda BUILDINGS_UNITS
+   729  1403 8d641f                 sta SCREEN_RAM_LINE_16 + 4
+   730                          
+   731  1406 60                     rts
+   732                          
+   733                          ;======================================================================================
+   734                          ; Clear the screen
+   735                          ;======================================================================================
+   736                          SUB_CLS:
+   737  1407 a920                   lda #CHAR_SPACE                     ; clear screen
+   738  1409 99001e             -   sta SCREEN_RAM_PAGE0,y
+   739  140c 99001f                 sta SCREEN_RAM_PAGE1,y
+   740  140f c8                     iny
+   741  1410 d0f7                   bne -
+   742                          
+   743  1412 a901                   lda #COLOUR_WHITE                   ; clear colour RAM
+   744  1414 990096             -   sta COLOUR_RAM_PAGE0,y
+   745  1417 990097                 sta COLOUR_RAM_PAGE1,y
+   746  141a c8                     iny
+   747  141b d0f7                   bne -
+   748                          
+   749  141d 60                     rts
+   750                          
+   751                          ;======================================================================================
+   752                          ; Print a string
+   753                          ; string pointed to by TEXT_MSB & TEXT_LSB
+   754                          ; location A=MSB, X=LSB, (and Y=0 as is the law)
+   755                          ;======================================================================================
+   756                          SUB_PRINT_STRING:
+   757  141e 853b                   sta TEXT_POS_MSB
+   758  1420 863a                   stx TEXT_POS_LSB
+   759                          
+   760  1422 b138               -   lda (TEXT),y                        ; load the next character
+   761  1424 f005                   beq +                               ; exit if 0
+   762  1426 913a                   sta (TEXT_POS),y                    ; display the character
+   763  1428 c8                     iny                                 ; next character
+   764  1429 d0f7                   bne -                               ; loop back (will stop after 256 chars in no 0)
+   765                          
+   766  142b a000               +   ldy #0                              ; reset y
+   767  142d 60                     rts
+   768                          
+   769                          ;======================================================================================
+   770                          ; Delay the equivalent of FOR N=1 TO A : NEXT N
+   771                          ; For 0<A<63
+   772                          ; Clears X and Y
+   773                          ;======================================================================================
+   774                          DELAY:
+   775  142e 0a                     asl                                 ; loop A*4*256
+   776  142f 0a                     asl                                 ;
+   777  1430 aa                     tax                                 ;
+   778  1431 88                 -   dey                                 ;
+   779  1432 d0fd                   bne -                               ;
+   780  1434 ca                     dex                                 ;
+   781  1435 d0fa                   bne -                               ;
+   782  1437 60                     rts                                 ;
+   783                          
+   784                          ;======================================================================================
+   785                          ; Pseudo-random-number generator. You can get 8-bit random numbers in A
+   786                          ; or 16-bit numbers from the zero page addresses. Leaves X/Y unchanged.
+   787                          ;
+   788                          ; (36 clock cycles)
+   789                          ;
+   790                          ; See
+   791                          ; https://web.archive.org/web/20250328001550/https://codebase64.org/doku.php?id=base:16bit_xorshift_random_generator
+   792                          ; and
+   793                          ; https://github.com/markgbeckett/pet/tree/main/examples
+   794                          ;======================================================================================
+   795                          RAND16:
+   796  1438 a508                   lda SEED_MSB                        ; (3)
+   797  143a 4a                     lsr			                        ; (2)
+   798  143b a507                   lda SEED_LSB	                    ; (3)
+   799  143d 6a                     ror			                        ; (2)
+   800  143e 4508                   eor SEED_MSB	                    ; (3)
+   801  1440 8508                   sta SEED_MSB	                    ; (3) high part of x ^= x << 7 done
+   802  1442 6a                     ror             	                ; (2) A has now x >> 9 and high bit comes from low byte
+   803  1443 4507                   eor SEED_LSB	                    ; (3)
+   804  1445 8507                   sta SEED_LSB	                    ; (3) x ^= x >> 9 and the low part of x ^= x << 7 done
+   805  1447 4508                   eor SEED_MSB	                    ; (3)
+   806  1449 8508                   sta SEED_MSB	                    ; (3) x ^= x << 8 done
+   807                          
+   808  144b 60                     rts			                        ; (6)
+   809                          
+   810                          ;======================================================================================
+   811                          ; Character Data
+   812                          ;======================================================================================
+   813                          
+   814                          CharacterData:
+   815                          ; Building
+   816  144c ffffdbdbffffdbdb   !byte 255,255,219,219,255,255,219,219
    817                          
-   818                          ;======================================================================================
-   819                          ; Character Data
-   820                          ;======================================================================================
-   821                          
-   822                          CharacterData:
-   823                          ; Building
-   824  1452 ffffdbdbffffdbdb   !byte 255,255,219,219,255,255,219,219
-   825                          
-   826                          ; Plane
-   827  145a 10189cffff9c1810   !byte 16,24,156,255,255,156,24,16
-   828                          
-   829                          ; Bomb
-   830  1462 3c3c183c3c3c3c18   !byte 60,60,24,60,60,60,60,24
-   831                          
-   832                          ; Grass (solid square)
-   833  146a ffffffffffffffff   !byte 255,255,255,255,255,255,255,255
-   834                          
-   835                          ; Sky (empty square)
-   836  1472 0000000000000000   !byte 0,0,0,0,0,0,0,0
-   837                          
-   838                          ; Roof (triangle)
-   839  147a 00000000183c7eff   !byte 0,0,0,0,24,60,126,255
-   840                          
-   841                          ;======================================================================================
-   842                          ; Strings
-   843                          ;======================================================================================
-   844                          TEXT_BUNNY_BLITZ:
-   845  1482 02150e0e1920020c...    !scr    "bunny blitz"
-   846  148d 00                     !byte 0
-   847                          
-   848                          TEXT_BY_ME:
-   849  148e 0401160520031512...    !scr    "dave curran 2026"
-   850  149e 00                     !byte 0
-   851                          
-   852                          ;            0123456789012345678901
-   853                          TEXT_BASED_ON:
-   854  149f 0201130504200f0e...    !scr    "based on rabbit blitz "
-   855  14b5 2020202020200219...    !scr    "      by c.simun"
-   856  14c5 00                     !byte 0
+   818                          ; Plane
+   819  1454 10189cffff9c1810   !byte 16,24,156,255,255,156,24,16
+   820                          
+   821                          ; Bomb
+   822  145c 3c3c183c3c3c3c18   !byte 60,60,24,60,60,60,60,24
+   823                          
+   824                          ; Grass (solid square)
+   825  1464 ffffffffffffffff   !byte 255,255,255,255,255,255,255,255
+   826                          
+   827                          ; Sky (empty square)
+   828  146c 0000000000000000   !byte 0,0,0,0,0,0,0,0
+   829                          
+   830                          ; Roof (triangle)
+   831  1474 00000000183c7eff   !byte 0,0,0,0,24,60,126,255
+   832                          
+   833                          ;======================================================================================
+   834                          ; Strings
+   835                          ;======================================================================================
+   836                          TEXT_BUNNY_BLITZ:
+   837  147c 02150e0e1920020c...    !scr    "bunny blitz"
+   838  1487 00                     !byte 0
+   839                          
+   840                          TEXT_BY_ME:
+   841  1488 0401160520031512...    !scr    "dave curran 2026"
+   842  1498 00                     !byte 0
+   843                          
+   844                          ;            0123456789012345678901
+   845                          TEXT_BASED_ON:
+   846  1499 0201130504200f0e...    !scr    "based on rabbit blitz "
+   847  14af 2020202020200219...    !scr    "      by c.simun"
+   848  14bf 00                     !byte 0
+   849                          
+   850                          TEXT_PRESS_A_KEY:
+   851  14c0 1012051313200120...    !scr    "press a key"
+   852  14cb 00                     !byte 0
+   853                          
+   854                          TEXT_ANOTHER_GO:
+   855  14cc 010e0f1408051220...    !scr    "another go? (y/n)"
+   856  14dd 00                     !byte 0
    857                          
-   858                          TEXT_PRESS_A_KEY:
-   859  14c6 1012051313200120...    !scr    "press a key"
-   860  14d1 00                     !byte 0
-   861                          
-   862                          TEXT_ANOTHER_GO:
-   863  14d2 010e0f1408051220...    !scr    "another go? (y/n)"
-   864  14e3 00                     !byte 0
-   865                          
-   866                          ;            0123456789012345678901
-   867                          TEXT_BUILDINGS:
-   868  14e4 2620202020200f0c...    !scr    "&     old buildings   "
-   869  14fa 2120303030200e0f...    !scr    "! 000 now happy bunny "
-   870  1510 212020202020100c...    !scr    "!     playgrounds"
-   871  1521 00                     !byte 0
-   872                          
-   873                          ;            0123456789012345678901
-   874                          TEXT_BOMBS:
-   875  1522 2320303020200c05...    !scr    "# 00  lemon-scented   "
-   876  1538 202020202020020f...    !scr    "      bombettes used"
-   877  154c 00                     !byte 0
-   878                          
-   879                          ;            0123456789012345678901
-   880                          TEXT_PLANES:
-   881  154d 222030202020100c...    !scr    "\" 0   plane loads of  "
-   882  1563 2020202020200215...    !scr    "      bunnies landed"
-   883  1577 00                     !byte 0
-   884                          
-   885                          ;            0123456789012345678901
-   886                          TEXT_CRASHED:
-   887  1578 0f0820040501122c...    !scr    "oh dear, you crashed  "
-   888  158e 010e042017091005...    !scr    "and wiped out a whole "
-   889  15a4 100c010e05200615...    !scr    "plane full of lovely  "
-   890  15ba 060c150606192002...    !scr    "fluffy bunnies.       "
-   891  15d0 2020202020202020...    !scr    "                      "
-   892  15e6 190f15200d151314...    !scr    "you must try harder to"
-   893  15fc 0c010e0420130106...    !scr    "land safely next time."
-   894  1612 00                     !byte 0
-   895                          
-   896                          ;            0123456789012345678901
-   897                          TEXT_LANDED:
-   898  1613 2017050c0c20040f...    !scr    " well done, you have  "
-   899  1629 20200c010e040504...    !scr    "  landed perfectly.   "
-   900  163f 2020202020202020...    !scr    "                      "
-   901  1655 14080520060c1506...    !scr    "the fluffy bunnies are"
-   902  166b 2016051219200801...    !scr    " very happy in their  "
-   903  1681 200e090305200e05...    !scr    " nice new playground."
-   904  1696 00                     !byte 0
-   905                          
+   858                          ;            0123456789012345678901
+   859                          TEXT_BUILDINGS:
+   860  14de 2620202020200f0c...    !scr    "&     old buildings   "
+   861  14f4 2120303030200e0f...    !scr    "! 000 now happy bunny "
+   862  150a 212020202020100c...    !scr    "!     playgrounds"
+   863  151b 00                     !byte 0
+   864                          
+   865                          ;            0123456789012345678901
+   866                          TEXT_BOMBS:
+   867  151c 2320303020200c05...    !scr    "# 00  lemon-scented   "
+   868  1532 202020202020020f...    !scr    "      bombettes used"
+   869  1546 00                     !byte 0
+   870                          
+   871                          ;            0123456789012345678901
+   872                          TEXT_PLANES:
+   873  1547 222030202020100c...    !scr    "\" 0   plane loads of  "
+   874  155d 2020202020200215...    !scr    "      bunnies landed"
+   875  1571 00                     !byte 0
+   876                          
+   877                          ;            0123456789012345678901
+   878                          TEXT_CRASHED:
+   879  1572 0f0820040501122c...    !scr    "oh dear, you crashed  "
+   880  1588 010e042017091005...    !scr    "and wiped out a whole "
+   881  159e 100c010e05200615...    !scr    "plane full of lovely  "
+   882  15b4 060c150606192002...    !scr    "fluffy bunnies.       "
+   883  15ca 2020202020202020...    !scr    "                      "
+   884  15e0 190f15200d151314...    !scr    "you must try harder to"
+   885  15f6 0c010e0420130106...    !scr    "land safely next time."
+   886  160c 00                     !byte 0
+   887                          
+   888                          ;            0123456789012345678901
+   889                          TEXT_LANDED:
+   890  160d 2017050c0c20040f...    !scr    " well done, you have  "
+   891  1623 20200c010e040504...    !scr    "  landed perfectly.   "
+   892  1639 2020202020202020...    !scr    "                      "
+   893  164f 14080520060c1506...    !scr    "the fluffy bunnies are"
+   894  1665 2016051219200801...    !scr    " very happy in their  "
+   895  167b 200e090305200e05...    !scr    " nice new playground."
+   896  1690 00                     !byte 0
+   897                          
